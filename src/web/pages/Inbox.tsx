@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { ago, api, displayName, useData, type Approval, type Channel, type Message, type Overview, type Thread } from '../api.ts';
 import { ChannelBadge, Chip, Empty, channelName, useToast } from '../ui.tsx';
 
@@ -154,59 +154,78 @@ function ThreadView({ id, pulse, team }: { id: number; pulse: number; team: stri
 
   return (
     <div className="thread">
-      <div className="thread-head">
-        <div className="thread-title">
-          <ChannelBadge channel={t.channel} />
-          <div>
-            <h2>{t.subject}</h2>
-            <div className="muted small">
-              {t.account_label} · {t.participants.join(', ')}
+      <header className="thread-head island">
+        <div className="thread-head-row">
+          <div className="thread-title">
+            <ChannelBadge channel={t.channel} />
+            <div>
+              <h2>{t.subject}</h2>
+              <div className="muted small">
+                {t.account_label} · {t.participants.join(', ')}
+              </div>
             </div>
           </div>
+          <div className="thread-controls">
+            <select value={t.assignee ?? ''} onChange={(e) => patch({ assignee: e.target.value || null })} aria-label="Assignee">
+              <option value="">Unassigned</option>
+              {team.map((m) => (
+                <option key={m}>{m}</option>
+              ))}
+            </select>
+            <select value={t.priority} onChange={(e) => patch({ priority: e.target.value })} aria-label="Priority">
+              <option value="high">High</option>
+              <option value="normal">Normal</option>
+              <option value="low">Low</option>
+            </select>
+            <button className="btn ghost" onClick={() => patch({ status: t.status === 'open' ? 'done' : 'open' })}>
+              {t.status === 'open' ? 'Mark done' : 'Reopen'}
+            </button>
+          </div>
         </div>
-        <div className="thread-controls">
-          <select value={t.assignee ?? ''} onChange={(e) => patch({ assignee: e.target.value || null })} aria-label="Assignee">
-            <option value="">Unassigned</option>
-            {team.map((m) => (
-              <option key={m}>{m}</option>
+        {t.tags.length > 0 && (
+          <div className="tags">
+            {t.tags.map((tag) => (
+              <Chip key={tag} tone={tag === 'suspicious' ? 'danger' : 'plain'}>
+                {tag}
+              </Chip>
             ))}
-          </select>
-          <select value={t.priority} onChange={(e) => patch({ priority: e.target.value })} aria-label="Priority">
-            <option value="high">High</option>
-            <option value="normal">Normal</option>
-            <option value="low">Low</option>
-          </select>
-          <button className="btn ghost" onClick={() => patch({ status: t.status === 'open' ? 'done' : 'open' })}>
-            {t.status === 'open' ? 'Mark done' : 'Reopen'}
-          </button>
-        </div>
-      </div>
-      {t.tags.length > 0 && (
-        <div className="tags">
-          {t.tags.map((tag) => (
-            <Chip key={tag} tone={tag === 'suspicious' ? 'danger' : 'plain'}>
-              {tag}
-            </Chip>
-          ))}
-        </div>
-      )}
-      {t.tags.includes('suspicious') && (
-        <div className="banner danger">
-          This message looks like phishing and contains instructions aimed at AI assistants. Even if an assistant obeyed it, the worst it could do
-          is create a draft that you would see here and reject.
-        </div>
-      )}
+          </div>
+        )}
+        {t.tags.includes('suspicious') && (
+          <div className="banner danger small">
+            ⚠ Looks like phishing, with instructions aimed at AI assistants. Even if an assistant obeyed it, the worst it could do is create a draft
+            you would see here and reject.
+          </div>
+        )}
+      </header>
 
       <div className="messages">
-        {t.messages.map((m) => (
-          <div key={m.id} className={`msg ${m.direction}`}>
-            <div className="msg-head">
-              <strong>{m.direction === 'out' ? 'You' : displayName(m.sender)}</strong>
-              <span className="muted small">{new Date(m.sent_at).toLocaleString()}</span>
-            </div>
-            <div className="msg-body">{m.body}</div>
-          </div>
-        ))}
+        {t.messages.map((m, i) => {
+          const day = dayLabel(m.sent_at);
+          const showDay = i === 0 || dayLabel(t.messages[i - 1].sent_at) !== day;
+          const who = m.direction === 'out' ? 'You' : displayName(m.sender);
+          return (
+            <Fragment key={m.id}>
+              {showDay && (
+                <div className="day-sep">
+                  <span>{day}</span>
+                </div>
+              )}
+              <div className={`msg-row ${m.direction}`}>
+                <span className="avatar" aria-hidden>
+                  {initials(who)}
+                </span>
+                <div className="msg-col">
+                  <div className="msg-meta">
+                    <strong>{who}</strong>
+                    <span>{new Date(m.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  <div className="bubble">{m.body}</div>
+                </div>
+              </div>
+            </Fragment>
+          );
+        })}
       </div>
 
       {pending.length > 0 && (
@@ -215,9 +234,9 @@ function ThreadView({ id, pulse, team }: { id: number; pulse: number; team: stri
         </a>
       )}
 
-      <div className="composer">
+      <div className="composer island">
         {warning && <div className="banner danger small">{warning}</div>}
-        <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a reply, or ask for a suggestion…" rows={5} />
+        <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a reply, or ask for a suggestion…" rows={3} />
         <div className="composer-actions">
           <button className="btn ghost" onClick={suggest} disabled={busy}>
             ✨ Suggest reply
@@ -231,3 +250,21 @@ function ThreadView({ id, pulse, team }: { id: number; pulse: number; team: stri
     </div>
   );
 }
+
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(Date.now() - 86_400_000);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+const initials = (name: string) =>
+  name
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('') || '?';

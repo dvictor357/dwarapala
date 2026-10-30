@@ -155,21 +155,41 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft
 .row-snippet { color: var(--ink-2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-meta { display: flex; gap: 6px; align-items: center; margin-top: 5px; flex-wrap: wrap; font-size: 12px; }
 
-.detail { overflow: auto; min-width: 0; }
-.thread { display: flex; flex-direction: column; min-height: 100%; padding: 18px 24px; }
-.thread-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
-.thread-title { display: flex; gap: 12px; align-items: flex-start; }
-.thread-controls { display: flex; gap: 8px; }
-.tags { display: flex; gap: 6px; margin-top: 10px; }
-.messages { display: flex; flex-direction: column; gap: 12px; margin: 18px 0; }
-.msg { max-width: 760px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
-.msg.out { align-self: flex-end; background: var(--accent-soft); border-color: #c8e3d3; }
-.msg-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-.msg-body { white-space: pre-wrap; }
-.composer { margin-top: auto; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; position: sticky; bottom: 0; }
-.composer textarea { border: 0; padding: 4px; background: transparent; }
+.detail { overflow: auto; min-width: 0; background: #ece6da; }
+.thread { display: flex; flex-direction: column; min-height: 100%; padding: 14px 18px 16px; gap: 12px; }
+
+/* Floating islands: header and composer lift off the recessed conversation backdrop. */
+.island { background: var(--card); border: 1px solid #e0d8c8; border-radius: 16px; box-shadow: 0 1px 2px #2a22140d, 0 8px 24px -12px #2a22142e; }
+.thread-head { position: sticky; top: 14px; z-index: 2; padding: 14px 16px; }
+.thread-head-row { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.thread-title { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
+.thread-title h2 { font-size: 19px; line-height: 1.25; }
+.thread-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.thread-head .tags { display: flex; gap: 6px; margin-top: 10px; }
+.thread-head .banner { margin: 12px 0 0; }
+
+.messages { display: flex; flex-direction: column; gap: 14px; padding: 6px 4px 10px; flex: 1; }
+.day-sep { display: flex; align-items: center; gap: 12px; color: var(--ink-3); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; margin: 4px 0; }
+.day-sep::before, .day-sep::after { content: ''; flex: 1; height: 1px; background: #d9d0bf; }
+.day-sep span { background: #e4ddcf; padding: 3px 10px; border-radius: 999px; }
+
+.msg-row { display: flex; gap: 10px; align-items: flex-start; max-width: min(760px, 88%); }
+.msg-row.out { align-self: flex-end; flex-direction: row-reverse; }
+.avatar { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: #d8cfbd; color: #4a4336; margin-top: 18px; }
+.msg-row.out .avatar { background: var(--accent); color: var(--accent-ink); }
+.msg-col { min-width: 0; display: flex; flex-direction: column; }
+.msg-row.out .msg-col { align-items: flex-end; }
+.msg-meta { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: var(--ink-3); margin: 0 4px 4px; }
+.msg-meta strong { color: var(--ink-2); font-weight: 600; }
+.bubble { white-space: pre-wrap; overflow-wrap: anywhere; padding: 11px 14px; border-radius: 16px; border-top-left-radius: 4px; background: #fff; border: 1px solid #e6dfd1; box-shadow: 0 1px 2px #2a22140f; }
+.msg-row.out .bubble { background: #dcefe3; border-color: #c4e0cf; border-top-left-radius: 16px; border-top-right-radius: 4px; }
+
+.thread > .banner.pending { margin: 0; }
+.composer { position: sticky; bottom: 16px; z-index: 2; padding: 10px 12px 12px; }
+.composer textarea { border: 0; padding: 6px; background: transparent; }
 .composer textarea:focus { outline: none; }
-.composer-actions { display: flex; align-items: center; gap: 12px; }
+.composer:focus-within { border-color: #b9d6c4; box-shadow: 0 0 0 3px var(--accent-soft), 0 8px 24px -12px #2a22142e; }
+.composer-actions { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--line-2); padding-top: 10px; }
 .composer-actions .muted { flex: 1; }
 
 /* approvals */
