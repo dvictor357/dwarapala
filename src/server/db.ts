@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS approvals (
   draft_body              TEXT NOT NULL,
   final_body              TEXT,
   status                  TEXT NOT NULL DEFAULT 'pending'
-                            CHECK (status IN ('pending','sending','sent','rejected','failed')),
+                            CHECK (status IN ('draft','pending','sending','sent','rejected','failed')),
   requested_by            TEXT NOT NULL,
   note                    TEXT,
   decided_by              TEXT,

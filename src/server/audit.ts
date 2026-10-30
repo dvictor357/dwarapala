@@ -7,6 +7,7 @@ export type AuditAction =
   | 'sync.error'
   | 'tool.called'
   | 'draft.created'
+  | 'draft.queued'
   | 'draft.edited'
   | 'approval.approved'
   | 'approval.rejected'

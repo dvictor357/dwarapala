@@ -1,8 +1,13 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/** Repo root, independent of cwd: Claude Desktop launches the stdio server from "/". */
+export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 // Load .env without a dependency. Real environment variables win over the file.
-if (existsSync('.env')) process.loadEnvFile('.env');
+const envFile = path.join(ROOT, '.env');
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 export type Channel = 'gmail' | 'outlook' | 'yahoo' | 'discord' | 'whatsapp';
 export const CHANNELS: Channel[] = ['gmail', 'outlook', 'yahoo', 'discord', 'whatsapp'];
@@ -29,7 +34,8 @@ const port = Number(env('PORT', '3000'));
 export const config = {
   port,
   appUrl: env('APP_URL', `http://localhost:${port}`).replace(/\/$/, ''),
-  dataDir: path.resolve(env('DATA_DIR', './data')),
+  dataDir: path.resolve(ROOT, env('DATA_DIR', './data')),
+  host: env('HOST', '127.0.0.1'),
   production: process.env.NODE_ENV === 'production',
 
   mockMode: flag('MOCK_MODE', true),

@@ -1,4 +1,5 @@
 import { upsertAccount } from './accounts.ts';
+import { tagAllThreads } from './ai.ts';
 import { audit } from './audit.ts';
 import { channelMode, config } from './config.ts';
 import { FIXTURE_ACCOUNTS } from './connectors/fixtures.ts';
@@ -10,13 +11,13 @@ export const TEAM = ['You', 'Sam (VA)', 'Claude'];
 
 export const DEFAULT_RULES = [
   {
-    name: 'Flag urgent words as high priority',
+    name: 'Urgent words → high priority',
     enabled: 1,
     conditions: { anyKeywords: ['urgent', 'asap', 'by friday', 'today', 'deadline'] },
     actions: [{ type: 'set_priority', value: 'high' }],
   },
   {
-    name: 'WhatsApp shop questions → assign Sam + suggest reply (goes to approval queue)',
+    name: 'WhatsApp → assign Sam + suggest reply',
     enabled: 1,
     conditions: { channels: ['whatsapp'] },
     actions: [
@@ -25,7 +26,7 @@ export const DEFAULT_RULES = [
     ],
   },
   {
-    name: 'Newsletters → low priority, mark done',
+    name: 'Newsletters → low priority',
     enabled: 1,
     conditions: { anyKeywords: ['unsubscribe', 'newsletter'] },
     actions: [
@@ -84,7 +85,7 @@ export async function seed(): Promise<void> {
 
   audit('system', 'seed', 'Demo data seeded');
   await syncAll({ initial: true });
-  await import('./ai.ts').then((m) => m.tagAllThreads()).catch(() => {});
+  await tagAllThreads();
 }
 
 export const isSeeded = (): boolean => !!one('SELECT 1 FROM accounts LIMIT 1');
