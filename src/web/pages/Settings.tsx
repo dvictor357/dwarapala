@@ -56,6 +56,22 @@ export function SettingsPage({ pulse, overview, reloadOverview }: { pulse: numbe
       </section>
 
       <section className="card">
+        <h3>Connect accounts</h3>
+        <p className="muted small">
+          {overview.mockMode ? 'Mock mode: the accounts below replay seeded data. ' : ''}Real mode is turned on per channel in <code>.env</code> (see README).
+          Gmail and Outlook connect with OAuth; Yahoo, the Discord bot and WhatsApp Business are configured in <code>.env</code>.
+        </p>
+        <div className="connect-row">
+          <a className={`btn ghost ${overview.connectable.google ? '' : 'disabled'}`} href={overview.connectable.google ? '/connect/google' : undefined}>
+            <ChannelBadge channel="gmail" size="sm" /> Connect Gmail
+          </a>
+          <a className={`btn ghost ${overview.connectable.microsoft ? '' : 'disabled'}`} href={overview.connectable.microsoft ? '/connect/microsoft' : undefined}>
+            <ChannelBadge channel="outlook" size="sm" /> Connect Outlook / Hotmail
+          </a>
+        </div>
+      </section>
+
+      <section className="card">
         <h3>Per-account limits & allowlists</h3>
         <p className="muted small">
           Allowlist entries are an exact address, phone number or handle, or <code>@domain.com</code> for a whole domain.

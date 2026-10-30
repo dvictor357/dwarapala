@@ -11,6 +11,7 @@ import { listRules, setRuleEnabled } from './rules.ts';
 import { killSwitchOn, setKillSwitch } from './safety.ts';
 import { simulateInbound, syncAll, syncOne } from './sync.ts';
 import { mcpInfo } from './mcp/info.ts';
+import { connectable } from './oauth.ts';
 
 export const api = Router();
 const ACTOR = `user:${config.operatorName}`;
@@ -39,6 +40,7 @@ api.get('/overview', h(() => ({
   killSwitch: killSwitchOn(),
   killSwitchFromEnv: config.envKillSwitch,
   mockMode: config.mockMode,
+  connectable: connectable(),
   llm: llm.name,
   channels: CHANNELS.map((c) => ({ id: c, label: CHANNEL_LABELS[c] })),
   accounts: listAccounts().map(toPublic),

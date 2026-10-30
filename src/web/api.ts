@@ -61,6 +61,7 @@ export type Overview = {
   killSwitch: boolean;
   killSwitchFromEnv: boolean;
   mockMode: boolean;
+  connectable: { google: boolean; microsoft: boolean };
   llm: string;
   accounts: Account[];
   team: string[];

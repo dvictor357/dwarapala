@@ -3,7 +3,10 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { api } from './api.ts';
 import { anyRealChannel, config, EXAMPLE_ENCRYPTION_KEY, ROOT } from './config.ts';
+import { ensureEnvAccounts } from './bootstrap.ts';
+import { whatsappWebhook } from './connectors/whatsapp.ts';
 import { links } from './links.ts';
+import { oauth } from './oauth.ts';
 import { mcpRouter } from './mcp/http.ts';
 import { handleInbound } from './rules.ts';
 import { isSeeded, seed } from './seed.ts';
@@ -27,9 +30,11 @@ app.disable('x-powered-by');
  *   cannot send without a CORS preflight this server never answers.
  */
 const allowedHosts = new Set(['localhost', '127.0.0.1', '[::1]', new URL(config.appUrl).hostname]);
+// Webhooks arrive from the provider through a tunnel (APP_URL); they verify their own signatures.
+const hostExempt = (path: string) => path.startsWith('/webhooks/');
 app.use((req: Request, res: Response, next: NextFunction) => {
   const host = (req.headers.host ?? '').replace(/:\d+$/, '');
-  if (!allowedHosts.has(host)) return void res.status(403).send(`Host "${host}" not allowed. Set APP_URL to serve on another hostname.`);
+  if (!allowedHosts.has(host) && !hostExempt(req.path)) return void res.status(403).send(`Host "${host}" not allowed. Set APP_URL to serve on another hostname.`);
   next();
 });
 app.use('/api', (req, res, next) => {
@@ -40,6 +45,8 @@ app.use('/api', (req, res, next) => {
 app.use('/api', express.json({ limit: '256kb' }), api);
 app.use(mcpRouter);
 app.use(links);
+app.use(oauth);
+app.use(whatsappWebhook);
 app.get('/healthz', (_req, res) => void res.json({ ok: true }));
 
 const webDist = path.join(ROOT, 'dist', 'web');
@@ -61,6 +68,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: 'Internal error. See server logs.' });
 });
 
+ensureEnvAccounts();
 if (!isSeeded()) {
   console.log('First run: seeding demo data…');
   await seed();

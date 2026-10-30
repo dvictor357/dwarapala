@@ -1,6 +1,11 @@
 import type { AccountRow } from '../accounts.ts';
+import { DiscordConnector } from './discord.ts';
+import { GmailConnector } from './gmail.ts';
 import { MockConnector } from './mock.ts';
-import { ConnectorError, type Connector } from './types.ts';
+import { OutlookConnector } from './outlook.ts';
+import type { Connector } from './types.ts';
+import { WhatsAppConnector } from './whatsapp.ts';
+import { YahooConnector } from './yahoo.ts';
 
 const cache = new Map<string, Connector>();
 
@@ -14,7 +19,8 @@ export function connectorFor(account: AccountRow): Connector {
   if (account.mode === 'mock') {
     c = new MockConnector(account.channel, account.id, account.address);
   } else {
-    throw new ConnectorError(account.channel, 'real mode not available yet');
+    const Real = { gmail: GmailConnector, outlook: OutlookConnector, yahoo: YahooConnector, discord: DiscordConnector, whatsapp: WhatsAppConnector }[account.channel];
+    c = new Real(account);
   }
   cache.set(key, c);
   return c;

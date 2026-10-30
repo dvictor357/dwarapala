@@ -4,6 +4,7 @@ import { config } from './config.ts';
 import { pushInbound } from './connectors/mock.ts';
 import { REPLAY_EVENTS, SIMULATED_INBOUND } from './connectors/fixtures.ts';
 import { connectorFor } from './connectors/registry.ts';
+import type { RemoteThreadWithMessages } from './connectors/types.ts';
 import { randomId } from './crypto.ts';
 import { nowIso, one, run, tx } from './db.ts';
 
@@ -38,44 +39,7 @@ export async function syncAccount(account: AccountRow, opts: { initial?: boolean
       if (local && local.last_message_at >= t.lastMessageAt) continue;
 
       const full = await connector.getThread(t.remoteId);
-      tx(() => {
-        run(
-          `INSERT INTO threads (account_id, remote_id, subject, participants, last_message_at, unread)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(account_id, remote_id) DO UPDATE SET
-             subject = excluded.subject, participants = excluded.participants,
-             last_message_at = excluded.last_message_at,
-             unread = MAX(threads.unread, excluded.unread),
-             status = CASE WHEN excluded.unread = 1 THEN 'open' ELSE threads.status END`,
-          account.id,
-          full.remoteId,
-          full.subject,
-          JSON.stringify(full.participants),
-          full.lastMessageAt,
-          full.unread ? 1 : 0,
-        );
-        const threadId = one<{ id: number }>(
-          'SELECT id FROM threads WHERE account_id = ? AND remote_id = ?',
-          account.id,
-          full.remoteId,
-        )!.id;
-        for (const m of full.messages) {
-          const res = run(
-            `INSERT OR IGNORE INTO messages (thread_id, remote_id, direction, sender, recipient, body, sent_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            threadId,
-            m.remoteId,
-            m.direction,
-            m.sender,
-            m.recipient,
-            m.body,
-            m.sentAt,
-          );
-          if (res.changes && m.direction === 'in') {
-            fresh.push({ threadId, messageId: Number(res.lastInsertRowid), accountId: account.id });
-          }
-        }
-      });
+      fresh.push(...ingestThread(account.id, full));
     }
 
     const prev = one<{ status: string }>('SELECT status FROM health WHERE account_id = ?', account.id);
@@ -109,16 +73,60 @@ export async function syncAccount(account: AccountRow, opts: { initial?: boolean
   }
 
   // Seeded history should not fire "new message" automation as if it just arrived.
-  if (fresh.length && !opts.initial) {
-    for (const fn of listeners) {
-      try {
-        await fn(fresh);
-      } catch (err) {
-        console.error('[sync] inbound listener failed', err);
-      }
+  if (!opts.initial) await emitInbound(fresh);
+  return fresh.length;
+}
+
+export async function emitInbound(events: InboundEvent[]): Promise<void> {
+  if (!events.length) return;
+  for (const fn of listeners) {
+    try {
+      await fn(events);
+    } catch (err) {
+      console.error('[sync] inbound listener failed', err);
     }
   }
-  return fresh.length;
+}
+
+/**
+ * Upserts one thread and its messages. Used by pull-based sync and by push
+ * sources (the WhatsApp webhook). Returns the inbound messages that were new.
+ */
+export function ingestThread(accountId: number, full: RemoteThreadWithMessages): InboundEvent[] {
+  const fresh: InboundEvent[] = [];
+  tx(() => {
+    run(
+      `INSERT INTO threads (account_id, remote_id, subject, participants, last_message_at, unread)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(account_id, remote_id) DO UPDATE SET
+         subject = excluded.subject, participants = excluded.participants,
+         last_message_at = MAX(threads.last_message_at, excluded.last_message_at),
+         unread = MAX(threads.unread, excluded.unread),
+         status = CASE WHEN excluded.unread = 1 THEN 'open' ELSE threads.status END`,
+      accountId,
+      full.remoteId,
+      full.subject,
+      JSON.stringify(full.participants),
+      full.lastMessageAt,
+      full.unread ? 1 : 0,
+    );
+    const threadId = one<{ id: number }>('SELECT id FROM threads WHERE account_id = ? AND remote_id = ?', accountId, full.remoteId)!.id;
+    for (const m of full.messages) {
+      const res = run(
+        `INSERT OR IGNORE INTO messages (thread_id, remote_id, direction, sender, recipient, body, sent_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        threadId,
+        m.remoteId,
+        m.direction,
+        m.sender,
+        m.recipient,
+        m.body,
+        m.sentAt,
+      );
+      if (res.changes && m.direction === 'in') fresh.push({ threadId, messageId: Number(res.lastInsertRowid), accountId });
+    }
+  });
+  return fresh;
 }
 
 export async function syncAll(opts: { initial?: boolean } = {}): Promise<number> {
