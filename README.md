@@ -1,6 +1,10 @@
-# One Inbox for Agents
+# Dwarapala
 
-A unified inbox for Gmail, Outlook/Hotmail, Yahoo, a Discord bot and WhatsApp Business, exposed to AI agents through an MCP server, with a **human approval gate on every outgoing message**.
+A self-hosted unified inbox for AI agents, with a human approval gate on every send.
+
+*Named after the dwarapala, the guardian statues that stand at Javanese and Balinese temple gates: nothing gets through without passing them.*
+
+Dwarapala brings Gmail, Outlook/Hotmail, Yahoo, a Discord bot and WhatsApp Business into one inbox and exposes it to your agent through an MCP server. It runs on your own machine or server: your messages and credentials stay in a local SQLite file, and there is no subscription or hosted account involved. Message content only leaves your server when you choose to send it to a model: the agent you connect, or the optional LLM provider used for digests and suggestions (or a local one via an OpenAI-compatible URL).
 
 It works with any MCP client: Claude Desktop, Claude Code, Cursor, VS Code, the OpenAI Agents SDK, ChatGPT connectors, n8n, Make, or your own agent.
 
@@ -8,7 +12,7 @@ Your agent can read, search, summarize and draft across all of your accounts. It
 
 ![Approve, edit, reject, audit](docs/demo.gif)
 
-> A demo and portfolio piece. Every integration has a **mock mode, on by default**, that replays realistic seeded conversations, so the full flow runs with zero credentials. You turn on real mode per channel in `.env`.
+> Every integration has a **mock mode, on by default**, that replays realistic seeded conversations, so the full flow runs with zero credentials. You turn on real mode per channel in `.env`.
 
 ---
 
@@ -17,7 +21,7 @@ Your agent can read, search, summarize and draft across all of your accounts. It
 Requirements: **Node 22.13+** (Node 24 recommended) *or* Docker.
 
 ```bash
-git clone <this repo> one-inbox-for-agents && cd one-inbox-for-agents
+git clone <this repo> dwarapala && cd dwarapala
 cp .env.example .env
 npm install && npm run dev        # or: docker compose up --build
 ```
@@ -186,12 +190,12 @@ Add one of these to `claude_desktop_config.json` (macOS: `~/Library/Application 
 ```json
 {
   "mcpServers": {
-    "one-inbox": {
+    "dwarapala": {
       "command": "/absolute/path/to/node",
       "args": [
         "--no-warnings=ExperimentalWarning",
-        "/absolute/path/to/one-inbox-for-agents/node_modules/tsx/dist/cli.mjs",
-        "/absolute/path/to/one-inbox-for-agents/src/server/mcp/stdio.ts"
+        "/absolute/path/to/dwarapala/node_modules/tsx/dist/cli.mjs",
+        "/absolute/path/to/dwarapala/src/server/mcp/stdio.ts"
       ]
     }
   }
@@ -203,9 +207,9 @@ Add one of these to `claude_desktop_config.json` (macOS: `~/Library/Application 
 ```json
 {
   "mcpServers": {
-    "one-inbox": {
+    "dwarapala": {
       "command": "docker",
-      "args": ["compose", "-f", "/absolute/path/to/one-inbox-for-agents/docker-compose.yml",
+      "args": ["compose", "-f", "/absolute/path/to/dwarapala/docker-compose.yml",
                "exec", "-T", "app", "node", "--no-warnings=ExperimentalWarning", "--import", "tsx", "src/server/mcp/stdio.ts"]
     }
   }
@@ -215,13 +219,13 @@ Add one of these to `claude_desktop_config.json` (macOS: `~/Library/Application 
 **Over HTTP via the running server** (works for npm or Docker):
 
 ```json
-{ "mcpServers": { "one-inbox": { "command": "npx", "args": ["-y", "mcp-remote", "http://localhost:3000/mcp"] } } }
+{ "mcpServers": { "dwarapala": { "command": "npx", "args": ["-y", "mcp-remote", "http://localhost:3000/mcp"] } } }
 ```
 
 ### Claude Code
 
 ```bash
-claude mcp add --transport http one-inbox http://localhost:3000/mcp
+claude mcp add --transport http dwarapala http://localhost:3000/mcp
 # with a token: add  --header "Authorization: Bearer $MCP_HTTP_TOKEN"
 ```
 
@@ -234,12 +238,12 @@ stdio:
 ```json
 {
   "mcpServers": {
-    "one-inbox": {
+    "dwarapala": {
       "command": "/absolute/path/to/node",
       "args": [
         "--no-warnings=ExperimentalWarning",
-        "/absolute/path/to/one-inbox-for-agents/node_modules/tsx/dist/cli.mjs",
-        "/absolute/path/to/one-inbox-for-agents/src/server/mcp/stdio.ts"
+        "/absolute/path/to/dwarapala/node_modules/tsx/dist/cli.mjs",
+        "/absolute/path/to/dwarapala/src/server/mcp/stdio.ts"
       ]
     }
   }
@@ -251,7 +255,7 @@ HTTP (server running):
 ```json
 {
   "mcpServers": {
-    "one-inbox": {
+    "dwarapala": {
       "url": "http://localhost:3000/mcp",
       "headers": { "Authorization": "Bearer <MCP_HTTP_TOKEN>" }
     }
@@ -268,13 +272,13 @@ Add to `.vscode/mcp.json`. VS Code uses a `servers` key and an explicit `type`.
 ```json
 {
   "servers": {
-    "one-inbox": {
+    "dwarapala": {
       "type": "stdio",
       "command": "/absolute/path/to/node",
       "args": [
         "--no-warnings=ExperimentalWarning",
-        "/absolute/path/to/one-inbox-for-agents/node_modules/tsx/dist/cli.mjs",
-        "/absolute/path/to/one-inbox-for-agents/src/server/mcp/stdio.ts"
+        "/absolute/path/to/dwarapala/node_modules/tsx/dist/cli.mjs",
+        "/absolute/path/to/dwarapala/src/server/mcp/stdio.ts"
       ]
     }
   }
@@ -286,7 +290,7 @@ or over HTTP:
 ```json
 {
   "servers": {
-    "one-inbox": {
+    "dwarapala": {
       "type": "http",
       "url": "http://localhost:3000/mcp",
       "headers": { "Authorization": "Bearer <MCP_HTTP_TOKEN>" }

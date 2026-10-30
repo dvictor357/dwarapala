@@ -227,7 +227,7 @@ export const FIXTURE_ACCOUNTS: FixtureAccount[] = [
   {
     channel: 'discord',
     label: 'Indie Makers (bot)',
-    address: 'OneInbox Bot · Indie Makers',
+    address: 'Dwarapala Bot · Indie Makers',
     threads: [
       {
         id: 'dc-5001',
@@ -253,14 +253,14 @@ export const FIXTURE_ACCOUNTS: FixtureAccount[] = [
             id: 'dc-5002-a',
             dir: 'in',
             from: 'mira.dev',
-            to: 'OneInbox Bot',
+            to: 'Dwarapala Bot',
             body: 'thanks for the shout-out in the showcase channel yesterday!',
             minutesAgo: 60 * 18,
           },
           {
             id: 'dc-5002-b',
             dir: 'out',
-            from: 'OneInbox Bot',
+            from: 'Dwarapala Bot',
             to: 'mira.dev',
             body: 'Anytime, the shader demo was great.',
             minutesAgo: 60 * 17,
@@ -340,7 +340,7 @@ export const REPLAY_EVENTS: ReplayEvent[] = [
   },
   {
     afterSeconds: 100,
-    accountAddress: 'OneInbox Bot · Indie Makers',
+    accountAddress: 'Dwarapala Bot · Indie Makers',
     threadId: 'dc-5001',
     subject: '#feedback-requests',
     message: {
@@ -377,7 +377,7 @@ export const SIMULATED_INBOUND: Omit<ReplayEvent, 'afterSeconds' | 'threadId'>[]
     message: { id: '', from: 'Dana Ortiz <dana@harborview-lettings.example>', to: 'alex.morgan.demo@outlook.com', body: 'Just checking you received the renewal, Alex. Happy to jump on a call.' },
   },
   {
-    accountAddress: 'OneInbox Bot · Indie Makers',
+    accountAddress: 'Dwarapala Bot · Indie Makers',
     subject: '#general',
     message: { id: '', from: 'sol_builds', to: '#general', body: 'anyone up for a co-working voice call this afternoon?' },
   },

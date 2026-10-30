@@ -64,7 +64,7 @@ export const config = {
     telegramChatId: env('TELEGRAM_CHAT_ID'),
     smtpUrl: env('NOTIFY_SMTP_URL'),
     emailTo: env('NOTIFY_EMAIL_TO'),
-    emailFrom: env('NOTIFY_EMAIL_FROM', 'One Inbox <no-reply@localhost>'),
+    emailFrom: env('NOTIFY_EMAIL_FROM', 'Dwarapala <no-reply@localhost>'),
   },
 
   google: {

@@ -65,8 +65,8 @@ function App() {
         <div className="brand">
           <span className="brand-mark">◎</span>
           <div>
-            <strong>One Inbox</strong>
-            <small>for Agents</small>
+            <strong>Dwarapala</strong>
+            <small>inbox gate for agents</small>
           </div>
         </div>
         {ROUTES.map((r) => (

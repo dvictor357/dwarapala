@@ -11,4 +11,4 @@ if (!isSeeded()) await seed();
 
 const server = buildMcpServer('stdio');
 await server.connect(new StdioServerTransport());
-console.error('[one-inbox] MCP server ready on stdio');
+console.error('[dwarapala] MCP server ready on stdio');

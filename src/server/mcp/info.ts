@@ -14,7 +14,7 @@ export function mcpInfo() {
     tokenRequired: !!config.mcpHttpToken,
     claudeDesktop: {
       mcpServers: {
-        'one-inbox': {
+        'dwarapala': {
           command: process.execPath,
           args: ['--no-warnings=ExperimentalWarning', tsxCli, stdioEntry],
           env: { DATA_DIR: config.dataDir },
@@ -23,14 +23,14 @@ export function mcpInfo() {
     },
     claudeDesktopRemote: {
       mcpServers: {
-        'one-inbox': {
+        'dwarapala': {
           command: 'npx',
           args: ['-y', 'mcp-remote', `${config.appUrl}/mcp`, ...(config.mcpHttpToken ? ['--header', 'Authorization:Bearer ${MCP_HTTP_TOKEN}'] : [])],
           ...(config.mcpHttpToken ? { env: { MCP_HTTP_TOKEN: '<your token>' } } : {}),
         },
       },
     },
-    claudeCode: `claude mcp add --transport http one-inbox ${config.appUrl}/mcp${config.mcpHttpToken ? ' --header "Authorization: Bearer <MCP_HTTP_TOKEN>"' : ''}`,
+    claudeCode: `claude mcp add --transport http dwarapala ${config.appUrl}/mcp${config.mcpHttpToken ? ' --header "Authorization: Bearer <MCP_HTTP_TOKEN>"' : ''}`,
     make: { url: `${config.appUrl}/mcp`, headers },
   };
 }
