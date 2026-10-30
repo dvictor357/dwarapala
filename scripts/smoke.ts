@@ -37,6 +37,14 @@ const parse = (r: any) => {
 };
 
 async function main() {
+  // Start from a clean state: leftover simulated outages or a paused kill switch
+  // from a previous manual demo would otherwise make the send checks fail.
+  const health = await rest<{ account_id: number; outage: string | null }[]>('GET', '/api/health');
+  for (const h of health.data ?? []) {
+    if (h.outage) await rest('POST', `/api/health/${h.account_id}/outage`, { on: false });
+  }
+  await rest('PATCH', '/api/settings', { killSwitch: false });
+
   const http = new Client({ name: 'smoke-test', version: '1.0.0' });
   const headers: Record<string, string> = process.env.MCP_HTTP_TOKEN ? { Authorization: `Bearer ${process.env.MCP_HTTP_TOKEN}` } : {};
   await http.connect(new StreamableHTTPClientTransport(new URL(`${BASE}/mcp`), { requestInit: { headers } }));
