@@ -21,7 +21,7 @@ export function ApprovalsPage({ pulse, initialTab }: { pulse: number; initialTab
         <div>
           <h1>Approval queue</h1>
           <p className="muted">
-            Every outgoing message lands here first, whether it came from Claude, a rule, or you. Nothing is sent until someone approves it.
+            Every outgoing message lands here first, whether it came from your agent, a rule, or you. Nothing is sent until someone approves it.
           </p>
         </div>
         <div className="seg">
@@ -33,7 +33,7 @@ export function ApprovalsPage({ pulse, initialTab }: { pulse: number; initialTab
           </button>
         </div>
       </div>
-      {data?.length === 0 && <Empty>{tab === 'pending' ? 'Nothing waiting. Ask Claude to draft a reply.' : 'No decisions yet.'}</Empty>}
+      {data?.length === 0 && <Empty>{tab === 'pending' ? 'Nothing waiting. Ask your agent to draft a reply.' : 'No decisions yet.'}</Empty>}
       {data?.map((a) => <ApprovalCard key={a.id} a={a} onChange={reload} />)}
     </div>
   );
@@ -90,7 +90,7 @@ function ApprovalCard({ a, onChange }: { a: Approval; onChange: () => void }) {
         </div>
         <div>
           <label>
-            {a.status === 'sent' ? 'Sent' : editing ? 'Edit reply' : fromClaude ? "Claude's draft" : 'Draft'}
+            {a.status === 'sent' ? 'Sent' : editing ? 'Edit reply' : fromClaude ? "Agent's draft" : 'Draft'}
             {a.final_body && a.final_body !== a.draft_body && <span className="edited"> · edited before sending</span>}
           </label>
           {editing ? (

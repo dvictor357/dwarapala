@@ -80,7 +80,7 @@ startSyncLoop();
 startMockReplay();
 
 app.listen(config.port, config.host, () => {
-  console.log(`\n  One Inbox for Claude  →  ${config.appUrl}`);
+  console.log(`\n  One Inbox for Agents  →  ${config.appUrl}`);
   console.log(`  MCP (Streamable HTTP) →  ${config.appUrl}/mcp   ·  legacy SSE → ${config.appUrl}/sse`);
-  console.log(`  Mode: ${config.mockMode ? 'MOCK (no credentials needed)' : 'REAL'}  ·  run "npm run mcp:config" for the Claude Desktop snippet\n`);
+  console.log(`  Mode: ${config.mockMode ? 'MOCK (no credentials needed)' : 'REAL'}  ·  run "npm run mcp:config" for MCP client config snippets\n`);
 });

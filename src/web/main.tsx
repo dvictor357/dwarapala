@@ -66,7 +66,7 @@ function App() {
           <span className="brand-mark">◎</span>
           <div>
             <strong>One Inbox</strong>
-            <small>for Claude</small>
+            <small>for Agents</small>
           </div>
         </div>
         {ROUTES.map((r) => (
@@ -86,7 +86,7 @@ function App() {
       <div className="main">
         <header className="topbar">
           <div className="gate-note">
-            <span className="lock">🔒</span> Claude can read and draft. <strong>Only you can send.</strong>
+            <span className="lock">🔒</span> Your agent can read and draft. <strong>Only you can send.</strong>
           </div>
           <div className="top-actions">
             {ov?.mockMode && (

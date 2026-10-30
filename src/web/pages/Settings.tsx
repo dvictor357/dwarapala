@@ -130,7 +130,7 @@ export function SettingsPage({ pulse, overview, reloadOverview }: { pulse: numbe
 
       {mcp && (
         <section className="card">
-          <h3>Connect Claude (MCP)</h3>
+          <h3>Connect your agent (MCP)</h3>
           <p className="small">
             Streamable HTTP: <code>{mcp.httpUrl}</code> · legacy SSE: <code>{mcp.sseUrl}</code> {mcp.tokenRequired && <Chip tone="ok">token required</Chip>}
           </p>

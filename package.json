@@ -1,9 +1,9 @@
 {
-  "name": "one-inbox-for-claude",
+  "name": "one-inbox-for-agents",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Unified multi-account inbox exposed to Claude over MCP, with a human approval gate on every outgoing message.",
+  "description": "Unified multi-account inbox exposed to any AI agent over MCP, with a human approval gate on every outgoing message.",
   "engines": {
     "node": ">=22.13"
   },

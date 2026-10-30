@@ -1,4 +1,4 @@
-// stdio entry for Claude Desktop / Claude Code. stdout carries the protocol, so
+// stdio entry for local MCP clients (Claude Desktop, Claude Code, Cursor, VS Code, ...). stdout carries the protocol, so
 // anything human-readable must go to stderr.
 console.log = console.error;
 

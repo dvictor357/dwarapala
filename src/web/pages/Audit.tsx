@@ -18,13 +18,13 @@ export function AuditPage({ pulse }: { pulse: number }) {
       <div className="page-head">
         <div>
           <h1>Audit log</h1>
-          <p className="muted">Append-only record of who did what, when: every tool call from Claude, every draft, decision, send and block.</p>
+          <p className="muted">Append-only record of who did what, when: every tool call from your agent, every draft, decision, send and block.</p>
         </div>
         <div className="audit-filters">
           <div className="seg">
             {KINDS.map((k) => (
               <button key={k} className={kind === k ? 'on' : ''} onClick={() => setKind(k)}>
-                {k === 'mcp' ? 'Claude (MCP)' : k}
+                {k === 'mcp' ? 'Agent (MCP)' : k}
               </button>
             ))}
           </div>

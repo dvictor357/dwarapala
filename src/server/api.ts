@@ -122,7 +122,7 @@ api.patch('/threads/:id', h((req) => {
 
 api.post('/threads/:id/suggest', h((req) => suggestReply(int(req.params.id) ?? 0)));
 
-// Anyone composing in the UI goes through the same gate as Claude.
+// Anyone composing in the UI goes through the same gate as the agent.
 api.post('/threads/:id/drafts', h((req) =>
   createDraft({ threadId: int(req.params.id) ?? 0, body: String(req.body?.body ?? ''), requestedBy: ACTOR, queue: true }),
 ));

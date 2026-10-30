@@ -241,7 +241,7 @@ function ThreadView({ id, pulse, team }: { id: number; pulse: number; team: stri
           <button className="btn ghost" onClick={suggest} disabled={busy}>
             ✨ Suggest reply
           </button>
-          <span className="muted small">Replies go to the approval queue first, from you or from Claude.</span>
+          <span className="muted small">Replies go to the approval queue first, from you or from your agent.</span>
           <button className="btn primary" onClick={queue} disabled={busy || !draft.trim()}>
             Send for approval
           </button>

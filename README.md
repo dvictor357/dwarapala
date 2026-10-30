@@ -1,8 +1,10 @@
-# One Inbox for Claude
+# One Inbox for Agents
 
-A unified inbox for Gmail, Outlook/Hotmail, Yahoo, a Discord bot and WhatsApp Business, exposed to Claude through an MCP server, with a **human approval gate on every outgoing message**.
+A unified inbox for Gmail, Outlook/Hotmail, Yahoo, a Discord bot and WhatsApp Business, exposed to AI agents through an MCP server, with a **human approval gate on every outgoing message**.
 
-Claude can read, search, summarize and draft across all of your accounts. It cannot send. Every reply, whether it comes from Claude, an automation rule or you, lands in an approval queue. You approve it, edit and approve it, or reject it. Only an approval triggers the actual send, and the audit log records each step.
+It works with any MCP client: Claude Desktop, Claude Code, Cursor, VS Code, the OpenAI Agents SDK, ChatGPT connectors, n8n, Make, or your own agent.
+
+Your agent can read, search, summarize and draft across all of your accounts. It cannot send. Every reply, whether it comes from the agent, an automation rule or you, lands in an approval queue. You approve it, edit and approve it, or reject it. Only an approval triggers the actual send, and the audit log records each step.
 
 ![Approve, edit, reject, audit](docs/demo.gif)
 
@@ -15,7 +17,7 @@ Claude can read, search, summarize and draft across all of your accounts. It can
 Requirements: **Node 22.13+** (Node 24 recommended) *or* Docker.
 
 ```bash
-git clone <this repo> one-inbox-for-claude && cd one-inbox-for-claude
+git clone <this repo> one-inbox-for-agents && cd one-inbox-for-agents
 cp .env.example .env
 npm install && npm run dev        # or: docker compose up --build
 ```
@@ -34,20 +36,22 @@ This drives the MCP server over Streamable HTTP and stdio. It then exercises the
 
 ## 3-minute demo script
 
-Setup (before the call): `npm run dev`, then add the MCP server to Claude Desktop ([below](#connect-claude-desktop)) and restart Claude Desktop. Keep the web UI open at **Approvals**.
+The script uses Claude Desktop as the example client, but any client from [Connect your agent](#connect-your-agent) works the same way.
+
+Setup (before the call): `npm run dev`, then add the MCP server to your client and restart it. Keep the web UI open at **Approvals**.
 
 | # | Do | What the client sees |
 |---|----|----|
 | 1 | In Claude Desktop: **"Summarize my unread across all accounts."** | Claude calls `summarize_inbox`. It lists the unread items across 6 accounts (8 at startup, more as mock replay delivers new ones): an invoice question, a brand-feedback deadline, a lease renewal, a Yahoo lead, a Discord feedback request and a WhatsApp order question. It also flags a **phishing email that tries to instruct the AI** and does not act on it. |
 | 2 | **"Reply to the Yahoo thread from Hannah and the Discord message from pixelpete."** | Claude calls `get_thread`, `draft_reply` and `request_send` twice. It says both replies are *waiting for your approval*. Nothing has been sent. |
-| 3 | Switch to the web UI → **Approvals** (badge shows 2) | Two cards, each showing the channel, account, recipient, *what they wrote* and *Claude's draft*, labelled with the MCP client's own name (Claude Desktop reports itself as `claude-ai`). |
+| 3 | Switch to the web UI → **Approvals** (badge shows 2) | Two cards, each showing the channel, account, recipient, *what they wrote* and *Agent's draft*, labelled with the MCP client's own name (Claude Desktop reports itself as `claude-ai`). |
 | 4 | On the Yahoo card: **Edit** → change a sentence → **Approve edited & send** | Toast "Edited and sent". The card moves to History, marked *edited before sending*. The reply appears in the Yahoo thread in **Inbox**. |
 | 5 | On the Discord card: **Reject** → reason "I'll answer in voice chat" → **Reject draft** | Card marked rejected. Nothing was sent. |
-| 6 | **Audit log** | The full trail, newest first: Claude's tool calls (with the client's name), draft created, queued, edited, approved, sent, rejected, plus who did each and when. Filter by "Claude (MCP)". |
+| 6 | **Audit log** | The full trail, newest first: Claude's tool calls (with the client's name), draft created, queued, edited, approved, sent, rejected, plus who did each and when. Filter by "Agent (MCP)". |
 | 7 | *(optional, 30s)* Top bar **Sending live** → it flips to **Sending paused**. Ask Claude for another reply and try to approve it. | Blocked by the kill switch. The item stays pending and `send.blocked` is logged. |
 | 8 | *(optional, 30s)* **Health** → **Simulate outage** on Outlook | The status goes red with a provider-style error, which is what monthly upkeep watches. **Recover** turns it green again and logs a recovery event. |
 
-No Claude Desktop handy? Use Claude Code (`claude mcp add …`, see below) or run `npm run smoke`, which performs steps 1–6 through MCP. Mock replay also drops 3 new messages into the inbox 45–160 seconds after startup, and **+ Simulate inbound** adds more on demand. A rule auto-drafts replies for new WhatsApp questions into the same queue.
+No client handy? Use Claude Code (`claude mcp add …`, see below) or run `npm run smoke`, which performs steps 1–6 through MCP. Mock replay also drops 3 new messages into the inbox 45–160 seconds after startup, and **+ Simulate inbound** adds more on demand. A rule auto-drafts replies for new WhatsApp questions into the same queue.
 
 ---
 
@@ -70,8 +74,8 @@ No Claude Desktop handy? Use Claude Code (`claude mcp add …`, see below) or ru
 ```mermaid
 flowchart LR
   subgraph Clients
-    CD[Claude Desktop / Claude Code]
-    MK[Make scenario]
+    CD["Local agents<br/>Claude Desktop · Claude Code · Cursor · VS Code"]
+    MK["Remote agents<br/>Make · n8n · custom"]
     UI[Web UI - React]
     TG[Telegram / email approve links]
   end
@@ -115,7 +119,7 @@ The send path. There is exactly one caller of `connector.send()` in the codebase
 
 ```mermaid
 sequenceDiagram
-  participant C as Claude (MCP)
+  participant C as Agent (MCP)
   participant Q as Approval queue
   participant H as Human (UI / link)
   participant S as Safety checks
@@ -134,7 +138,7 @@ sequenceDiagram
 ```
 
 - **One process, one port.** Express serves the API, the MCP endpoints, the approve-link pages, the WhatsApp webhook and the React UI. In development the UI goes through Vite middleware; in Docker it is a static build.
-- **SQLite via Node's built-in `node:sqlite`.** No native build step. WAL mode lets the stdio MCP process (spawned by Claude Desktop) and the web process share one file. The UI polls a cheap `/api/pulse` endpoint, so drafts created over stdio appear live.
+- **SQLite via Node's built-in `node:sqlite`.** No native build step. WAL mode lets the stdio MCP process (spawned by the MCP client) and the web process share one file. The UI polls a cheap `/api/pulse` endpoint, so drafts created over stdio appear live.
 - **Sync model.** Connectors are the source of truth. A sync loop pulls threads into SQLite idempotently, keyed by provider ids. WhatsApp is push-based through its webhook and feeds the same ingest function. Mock connectors run through the exact same path.
 
 ### What was reused conceptually, and what was dropped
@@ -160,11 +164,24 @@ There is deliberately **no send tool**. Tool results mark message bodies as untr
 
 ---
 
-## Connect Claude Desktop
+## Connect your agent
 
-Run `npm run mcp:config`. It prints ready-to-paste snippets with your machine's absolute paths. Add one of them to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`) and restart Claude Desktop.
+The server speaks standard MCP over two transports, so any MCP client works:
 
-**stdio (recommended):** Claude Desktop starts the server itself, so you don't need the web server running to use the tools. You do need it running to approve in the UI.
+- **stdio** for local clients: the client starts `src/server/mcp/stdio.ts` itself. You don't need the web server running to use the tools, but you do need it running to approve in the UI.
+- **Streamable HTTP** at `http://localhost:3000/mcp` while `npm run dev` (or Docker) is running. A legacy SSE endpoint is also at `/sse` for older clients.
+
+Run `npm run mcp:config` to print ready-to-paste snippets with your machine's absolute paths. Settings in the web UI shows the same thing.
+
+If `MCP_HTTP_TOKEN` is set in `.env`, every HTTP request must carry `Authorization: Bearer <MCP_HTTP_TOKEN>`. For clients that can't set headers, `?token=<MCP_HTTP_TOKEN>` on the URL works too. Without the variable, the HTTP endpoint is open, so set it before exposing the app anywhere.
+
+Whatever client connects, it gets the same six tools and no send tool. Its drafts land in the same approval queue, and the audit log records the client's own name (`mcp:<client name> (http|stdio)`).
+
+### Claude Desktop
+
+Add one of these to `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`) and restart Claude Desktop.
+
+**stdio (recommended):**
 
 ```json
 {
@@ -173,8 +190,8 @@ Run `npm run mcp:config`. It prints ready-to-paste snippets with your machine's 
       "command": "/absolute/path/to/node",
       "args": [
         "--no-warnings=ExperimentalWarning",
-        "/absolute/path/to/one-inbox-for-claude/node_modules/tsx/dist/cli.mjs",
-        "/absolute/path/to/one-inbox-for-claude/src/server/mcp/stdio.ts"
+        "/absolute/path/to/one-inbox-for-agents/node_modules/tsx/dist/cli.mjs",
+        "/absolute/path/to/one-inbox-for-agents/src/server/mcp/stdio.ts"
       ]
     }
   }
@@ -188,7 +205,7 @@ Run `npm run mcp:config`. It prints ready-to-paste snippets with your machine's 
   "mcpServers": {
     "one-inbox": {
       "command": "docker",
-      "args": ["compose", "-f", "/absolute/path/to/one-inbox-for-claude/docker-compose.yml",
+      "args": ["compose", "-f", "/absolute/path/to/one-inbox-for-agents/docker-compose.yml",
                "exec", "-T", "app", "node", "--no-warnings=ExperimentalWarning", "--import", "tsx", "src/server/mcp/stdio.ts"]
     }
   }
@@ -201,23 +218,109 @@ Run `npm run mcp:config`. It prints ready-to-paste snippets with your machine's 
 { "mcpServers": { "one-inbox": { "command": "npx", "args": ["-y", "mcp-remote", "http://localhost:3000/mcp"] } } }
 ```
 
-**Claude Code:**
+### Claude Code
 
 ```bash
 claude mcp add --transport http one-inbox http://localhost:3000/mcp
 # with a token: add  --header "Authorization: Bearer $MCP_HTTP_TOKEN"
 ```
 
-## Connect a Make scenario
+### Cursor
 
-Make runs in the cloud, so it needs a public URL:
+Add to `.cursor/mcp.json` in your project (or `~/.cursor/mcp.json` for all projects).
+
+stdio:
+
+```json
+{
+  "mcpServers": {
+    "one-inbox": {
+      "command": "/absolute/path/to/node",
+      "args": [
+        "--no-warnings=ExperimentalWarning",
+        "/absolute/path/to/one-inbox-for-agents/node_modules/tsx/dist/cli.mjs",
+        "/absolute/path/to/one-inbox-for-agents/src/server/mcp/stdio.ts"
+      ]
+    }
+  }
+}
+```
+
+HTTP (server running):
+
+```json
+{
+  "mcpServers": {
+    "one-inbox": {
+      "url": "http://localhost:3000/mcp",
+      "headers": { "Authorization": "Bearer <MCP_HTTP_TOKEN>" }
+    }
+  }
+}
+```
+
+Leave out `headers` if you haven't set a token.
+
+### VS Code (GitHub Copilot agent mode)
+
+Add to `.vscode/mcp.json`. VS Code uses a `servers` key and an explicit `type`.
+
+```json
+{
+  "servers": {
+    "one-inbox": {
+      "type": "stdio",
+      "command": "/absolute/path/to/node",
+      "args": [
+        "--no-warnings=ExperimentalWarning",
+        "/absolute/path/to/one-inbox-for-agents/node_modules/tsx/dist/cli.mjs",
+        "/absolute/path/to/one-inbox-for-agents/src/server/mcp/stdio.ts"
+      ]
+    }
+  }
+}
+```
+
+or over HTTP:
+
+```json
+{
+  "servers": {
+    "one-inbox": {
+      "type": "http",
+      "url": "http://localhost:3000/mcp",
+      "headers": { "Authorization": "Bearer <MCP_HTTP_TOKEN>" }
+    }
+  }
+}
+```
+
+### n8n
+
+1. If n8n runs anywhere other than your machine, expose the app first (see [Exposing the HTTP endpoint](#exposing-the-http-endpoint)).
+2. In an AI Agent workflow, add an **MCP Client Tool** node.
+3. Endpoint: `http://<host>:3000/mcp` (or your tunnel URL + `/mcp`), transport **HTTP Streamable**.
+4. Authentication: **Bearer** with your `MCP_HTTP_TOKEN`.
+5. The agent node can now call the tools. `request_send` still only queues; someone approves in the UI or through an approve link.
+
+### Make
+
+1. Expose the app (Make runs in the cloud, so it needs a public URL; see below).
+2. In Make, add an **MCP client** module and create a connection with:
+   - **URL:** `https://<your-tunnel>/mcp` (Streamable HTTP). For clients that only speak the older transport, use `https://<your-tunnel>/sse`.
+   - **Header:** `Authorization: Bearer <MCP_HTTP_TOKEN>`
+3. Use the tools like any other module, for example a daily scenario: `summarize_inbox` → post the narrative to Slack. Make gets the same tools as every other client, so a Make scenario also **cannot send**. `request_send` from Make lands in the same approval queue, and the audit log attributes it to Make's client name.
+
+### Any other MCP client or a custom agent
+
+Anything that speaks MCP over Streamable HTTP can connect: point it at `http://<host>:3000/mcp` and send `Authorization: Bearer <MCP_HTTP_TOKEN>` if a token is set. That covers the official MCP SDKs, the OpenAI Agents SDK's Streamable HTTP MCP server class, and similar frameworks. Hosted clients such as ChatGPT connectors need a public HTTPS URL and their own auth setup; check what your client supports before relying on the bearer header (the `?token=` fallback exists for that case). `scripts/smoke.ts` is a working example of a TypeScript client using `@modelcontextprotocol/sdk` over both transports.
+
+### Exposing the HTTP endpoint
+
+For cloud clients (Make, hosted n8n, remote agents):
 
 1. Set `MCP_HTTP_TOKEN` to a long random value in `.env`. This is required once the endpoint is reachable from outside.
 2. Expose the app, for example with `cloudflared tunnel --url http://localhost:3000`, and set `APP_URL` to the tunnel URL. The server only answers on `localhost` and the `APP_URL` hostname, which protects against DNS rebinding. Restart the app.
-3. In Make, add an **MCP client** module and create a connection with:
-   - **URL:** `https://<your-tunnel>/mcp` (Streamable HTTP). For clients that only speak the older transport, use `https://<your-tunnel>/sse`.
-   - **Header:** `Authorization: Bearer <MCP_HTTP_TOKEN>`
-4. Use the tools like any other module, for example a daily scenario: `summarize_inbox` → post the narrative to Slack. Make gets the same tools as Claude, so a Make scenario also **cannot send**. `request_send` from Make lands in the same approval queue, and the audit log attributes it to Make's client name.
 
 ---
 
@@ -265,7 +368,7 @@ Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, and/or `NOTIFY_SMTP_URL` and `N
 ## Safety design
 
 - **Approval gate.** The MCP server has no send tool. `request_send` only queues. `approvals.approve()` is the only function that calls `connector.send()`, and it first claims the row atomically (`pending → sending`), so a double click, or the UI and a Telegram link at the same moment, cannot send twice.
-- **Recipients come from the thread, not the model.** A draft always replies to the thread's latest inbound sender. Claude cannot be talked into redirecting a reply to another address.
+- **Recipients come from the thread, not the model.** A draft always replies to the thread's latest inbound sender. The agent cannot be talked into redirecting a reply to another address.
 - **Approve links can't be triggered by a preview.** Links are HMAC-signed, expire after 24h, and are single-use. Opening one shows a confirm page; only the page's POST button sends. Chat apps and mail scanners that prefetch URLs cannot approve anything.
 - **Kill switch.** A UI toggle plus `SEND_KILL_SWITCH=1` as a hard override. Blocked approvals stay pending, with the reason shown and logged.
 - **Per-account rate limit** on sends per hour, and an optional **recipient allowlist** per account (exact address, number or handle, or `@domain`).

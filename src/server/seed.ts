@@ -7,7 +7,7 @@ import { randomId } from './crypto.ts';
 import { db, getSetting, one, run, setSetting } from './db.ts';
 import { syncAll } from './sync.ts';
 
-export const TEAM = ['You', 'Sam (VA)', 'Claude'];
+export const TEAM = ['You', 'Sam (VA)', 'Agent'];
 
 export const DEFAULT_RULES = [
   {

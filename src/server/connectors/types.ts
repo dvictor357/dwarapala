@@ -31,7 +31,7 @@ export type SendInput = DraftInput & { remoteDraftId?: string | null };
 
 /**
  * The one interface every channel implements, mock or real.
- * Only approvals.ts may call send(); nothing exposed to Claude reaches it directly.
+ * Only approvals.ts may call send(); nothing exposed to MCP clients reaches it directly.
  */
 export interface Connector {
   readonly channel: Channel;
