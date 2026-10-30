@@ -48,7 +48,8 @@ const BASE = `
   SELECT t.id, t.account_id, a.label AS account_label, a.address AS account_address, a.channel,
          t.subject, t.participants, t.last_message_at, t.unread, t.status, t.assignee, t.priority, t.tags,
          (SELECT substr(body, 1, 160) FROM messages m WHERE m.thread_id = t.id ORDER BY sent_at DESC, id DESC LIMIT 1) AS snippet,
-         (SELECT sender FROM messages m WHERE m.thread_id = t.id ORDER BY sent_at DESC, id DESC LIMIT 1) AS last_sender,
+         (SELECT CASE WHEN direction = 'out' THEN 'You' ELSE sender END FROM messages m
+           WHERE m.thread_id = t.id ORDER BY sent_at DESC, id DESC LIMIT 1) AS last_sender,
          (SELECT COUNT(*) FROM approvals p WHERE p.thread_id = t.id AND p.status = 'pending') AS pending_approvals
     FROM threads t JOIN accounts a ON a.id = t.account_id`;
 

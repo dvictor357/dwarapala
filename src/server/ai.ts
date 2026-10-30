@@ -1,5 +1,5 @@
 import type { Channel } from './config.ts';
-import { all, getSetting, nowIso, parseJson, setSetting } from './db.ts';
+import { all, getSetting, nowIso, parseJson, run, setSetting } from './db.ts';
 import { getThread, listThreads, updateThread, type MessageRow, type ThreadSummary } from './inbox.ts';
 import { llm } from './llm.ts';
 
@@ -74,9 +74,10 @@ const firstName = (sender: string): string => {
 const isChat = (c: Channel) => c === 'discord' || c === 'whatsapp';
 
 /** Canned but context-aware replies so the demo reads naturally without a model. */
-function heuristicReply(t: ThreadSummary, last: MessageRow): string {
+function heuristicReply(t: ThreadSummary & { messages: MessageRow[] }, last: MessageRow): string {
   const name = firstName(last.sender);
-  const body = last.body;
+  // Intent comes from everything they wrote, so a short follow-up keeps the context.
+  const body = t.messages.filter((m) => m.direction === 'in').map((m) => m.body).join('\n');
   const order = body.match(/#[A-Z]-?\d+/i)?.[0];
   const invoice = body.match(/#\d{3,}/)?.[0] ?? t.subject.match(/#\d{3,}/)?.[0];
   let core: string;
@@ -85,16 +86,20 @@ function heuristicReply(t: ThreadSummary, last: MessageRow): string {
     core = `Yes, we ship to ${body.match(/ship to (\w+)/i)![1]}! Delivery usually takes 7–10 business days and shipping is €12. Want me to reserve one for you?`;
   } else if (order || /\bship(ped)?\b/i.test(body)) {
     core = `Thanks for checking in! Let me look up order ${order ?? 'your order'} right now — I'll send you the tracking link within the hour so you have it before Saturday.`;
-  } else if (/invoice|reissue|PO/i.test(body)) {
+  } else if (/invoice|reissue/i.test(body) || /\bPOs?\b/.test(body)) {
     core = `No problem at all. I'll reissue ${invoice ?? 'the invoice'} as two separate invoices (4 spots + 2 spots) today so finance can match them to the right POs.`;
   } else if (/logo|review|look at/i.test(body)) {
     core = `Happy to take a look! I'll go through both versions tomorrow morning and send notes on legibility at small sizes well before Friday's launch. No charge for a quick pass.`;
   } else if (/available|taking on|cost|quote|budget/i.test(body)) {
-    core = `Thanks so much for reaching out, and glad the old ceramics site still holds up! Yes, I'm taking on a few small projects this season. A one-page workshop site typically runs €900–1,400 depending on copy and photos, and mid-November is doable. Could you share the workshop dates and any photos you have? Happy to do a quick 15-minute call this week.`;
-  } else if (/lease|renewal|sign/i.test(body)) {
+    core = /site|landing|page/i.test(body)
+      ? `Thanks so much for reaching out! Yes, I'm taking on a few small projects this season. A one-page site typically runs €900–1,400 depending on copy and photos, and ${/mid-november/i.test(body) ? 'mid-November is doable' : 'I can usually start within two weeks'}. Could you share the key dates and any photos you have? Happy to do a quick 15-minute call this week.`
+      : `Thanks for thinking of me, this sounds like a fun one! I'm interested. Could you send over the timeline, where it will be used and any references you like? I'll come back with a quote within a day.`;
+  } else if (/\blease\b|renewal/i.test(body)) {
     core = `Thanks for sending the renewal over. I'm reviewing it now and will get back to you before Friday — could we briefly talk about the 3% increase first?`;
   } else if (/feedback|wordmark|swap/i.test(body)) {
     core = `Thanks, great to hear direction B landed! I'll make the wordmark heavier for small sleeves and mock up the terracotta version. You'll have both by Wednesday 11:00.`;
+  } else if (/\bprint\b|\d+\s?x\s?\d+/i.test(body)) {
+    core = `Yes, I can print that size! Let me check the paper stock and send you the exact price today.`;
   } else {
     core = `Thanks for your message! I'll get back to you shortly.`;
   }
@@ -160,9 +165,15 @@ const gistOf = (body: string) => {
 };
 
 /** Daily digest across every account. Cached so the page and the MCP tool share one result. */
+/** New mail makes the cached digest stale. */
+export const invalidateDigest = () => run("DELETE FROM settings WHERE key = 'digest'");
+
 export async function digest(opts: { refresh?: boolean } = {}): Promise<Digest> {
+  const pendingApprovals = all<{ n: number }>("SELECT COUNT(*) AS n FROM approvals WHERE status = 'pending'")[0].n;
   const cached = parseJson<Digest | null>(getSetting('digest'), null);
-  if (cached && !opts.refresh && Date.now() - Date.parse(cached.generatedAt) < 10 * 60_000) return cached;
+  if (cached && !opts.refresh && Date.now() - Date.parse(cached.generatedAt) < 10 * 60_000) {
+    return { ...cached, counts: { ...cached.counts, pendingApprovals } };
+  }
 
   const threads = listThreads({ status: 'open', limit: 200 });
   const rank = { high: 0, normal: 1, low: 2 } as const;
@@ -181,7 +192,6 @@ export async function digest(opts: { refresh?: boolean } = {}): Promise<Digest> 
       unread: t.unread,
     }));
 
-  const pendingApprovals = all<{ n: number }>("SELECT COUNT(*) AS n FROM approvals WHERE status = 'pending'")[0].n;
   const counts = {
     unread: threads.filter((t) => t.unread).length,
     high: items.filter((i) => i.priority === 'high').length,

@@ -1,4 +1,4 @@
-import { suggestReply, triageThread } from './ai.ts';
+import { invalidateDigest, suggestReply, triageThread } from './ai.ts';
 import { createDraft } from './approvals.ts';
 import { audit } from './audit.ts';
 import type { Channel } from './config.ts';
@@ -50,6 +50,7 @@ function matches(rule: Rule, channel: Channel, accountId: number, haystack: stri
 }
 
 export async function handleInbound(events: InboundEvent[]): Promise<void> {
+  invalidateDigest();
   const rules = listRules().filter((r) => r.enabled);
   // One pass per thread even if several messages arrived in the same sync.
   for (const threadId of new Set(events.map((e) => e.threadId))) {
