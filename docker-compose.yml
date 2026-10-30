@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      DATA_DIR: /app/data
+    # Bound to localhost only: the app has no login. Put it behind auth before exposing it.
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - inbox-data:/app/data
+    restart: unless-stopped
+volumes:
+  inbox-data:

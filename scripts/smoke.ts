@@ -2,6 +2,7 @@
  * End-to-end check of the demo flow against a running server (npm run dev):
  * MCP over Streamable HTTP and stdio, the approval gate, safety checks, approve links.
  * Usage: npm run smoke   (APP_URL defaults to http://localhost:3000)
+ *        SMOKE_DOCKER=1 npm run smoke   when the app runs via docker compose
  */
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -11,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const BASE = (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const STDIO_IN_CONTAINER = ['node', '--no-warnings=ExperimentalWarning', '--import', 'tsx', 'src/server/mcp/stdio.ts'];
 let failures = 0;
 
 function check(cond: unknown, label: string) {
@@ -70,11 +72,16 @@ async function main() {
   // stdio transport, same tools, separate process sharing the SQLite file.
   const stdio = new Client({ name: 'smoke-stdio', version: '1.0.0' });
   await stdio.connect(
-    new StdioClientTransport({
-      command: process.execPath,
-      args: ['--no-warnings=ExperimentalWarning', path.join(ROOT, 'node_modules/tsx/dist/cli.mjs'), path.join(ROOT, 'src/server/mcp/stdio.ts')],
-      stderr: 'ignore',
-    }),
+    new StdioClientTransport(
+      // SMOKE_DOCKER=1 runs the stdio server inside the compose container, next to its SQLite file.
+      process.env.SMOKE_DOCKER
+        ? { command: 'docker', args: ['compose', 'exec', '-T', 'app', ...STDIO_IN_CONTAINER], cwd: ROOT, stderr: 'ignore' }
+        : {
+            command: process.execPath,
+            args: ['--no-warnings=ExperimentalWarning', path.join(ROOT, 'node_modules/tsx/dist/cli.mjs'), path.join(ROOT, 'src/server/mcp/stdio.ts')],
+            stderr: 'ignore',
+          },
+    ),
   );
   const viaStdio = parse(
     await stdio.callTool({

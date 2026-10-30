@@ -51,7 +51,7 @@ export function HealthPage({ pulse }: { pulse: number }) {
         <div>
           <h1>Connector health</h1>
           <p className="muted">
-            {errors ? `${errors} connector${errors > 1 ? 's' : ''} need attention.` : 'All connectors healthy.'} This is what monthly upkeep
+            {errors ? `${errors} connector${errors > 1 ? 's need' : ' needs'} attention.` : 'All connectors healthy.'} This is what monthly upkeep
             watches.
           </p>
         </div>

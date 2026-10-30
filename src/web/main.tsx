@@ -108,7 +108,7 @@ function App() {
 
         <section className="page">
           {route === 'inbox' && ov && <InboxPage pulse={pulse} overview={ov} threadArg={arg} />}
-          {route === 'approvals' && <ApprovalsPage pulse={pulse} />}
+          {route === 'approvals' && <ApprovalsPage pulse={pulse} initialTab={arg === 'history' ? 'history' : 'pending'} />}
           {route === 'digest' && <DigestPage pulse={pulse} />}
           {route === 'audit' && <AuditPage pulse={pulse} />}
           {route === 'health' && <HealthPage pulse={pulse} />}

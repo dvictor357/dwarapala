@@ -11,8 +11,8 @@ const STATUS_TONE: Record<Approval['status'], string> = {
   failed: 'danger',
 };
 
-export function ApprovalsPage({ pulse }: { pulse: number }) {
-  const [tab, setTab] = useState<'pending' | 'history'>('pending');
+export function ApprovalsPage({ pulse, initialTab }: { pulse: number; initialTab: 'pending' | 'history' }) {
+  const [tab, setTab] = useState<'pending' | 'history'>(initialTab);
   const { data, reload } = useData<Approval[]>(`/approvals?status=${tab}`, [pulse, tab]);
 
   return (
