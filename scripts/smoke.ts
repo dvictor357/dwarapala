@@ -48,7 +48,7 @@ async function main() {
   const accounts = parse(await http.callTool({ name: 'list_accounts', arguments: {} }));
   check(accounts.length >= 5, `list_accounts returns ${accounts.length} accounts`);
 
-  const summary = parse(await http.callTool({ name: 'summarize_inbox', arguments: {} }));
+  const summary = parse(await http.callTool({ name: 'summarize_inbox', arguments: { unread_only: false } }));
   check(summary.threads.length > 0, `summarize_inbox: ${summary.headline}`);
 
   const yahoo = summary.threads.find((t: any) => t.channel === 'yahoo');
