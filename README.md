@@ -71,6 +71,8 @@ No client handy? Use Claude Code (`claude mcp add …`, see below) or run `npm r
 | **Settings & safety** | |
 | ![Settings](docs/screenshots/7-settings.png) | |
 
+Regenerate these and `docs/demo.gif` with `npm run capture` (Playwright + ffmpeg, mock data in a throwaway database; port 3000 must be free).
+
 ---
 
 ## Architecture

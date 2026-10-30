@@ -15,7 +15,8 @@
     "mcp": "node --no-warnings=ExperimentalWarning --import tsx src/server/mcp/stdio.ts",
     "mcp:config": "node --no-warnings=ExperimentalWarning --import tsx scripts/mcp-config.ts",
     "smoke": "node --no-warnings=ExperimentalWarning --import tsx scripts/smoke.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "capture": "node --no-warnings=ExperimentalWarning --import tsx scripts/capture.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
@@ -36,6 +37,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "playwright": "^1.64.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
   }
