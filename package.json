@@ -1,0 +1,42 @@
+{
+  "name": "one-inbox-for-claude",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Unified multi-account inbox exposed to Claude over MCP, with a human approval gate on every outgoing message.",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "node --no-warnings=ExperimentalWarning --import tsx src/server/index.ts",
+    "start": "NODE_ENV=production node --no-warnings=ExperimentalWarning --import tsx src/server/index.ts",
+    "build": "vite build",
+    "seed": "node --no-warnings=ExperimentalWarning --import tsx src/server/seed-cli.ts",
+    "mcp": "node --no-warnings=ExperimentalWarning --import tsx src/server/mcp/stdio.ts",
+    "mcp:config": "node --no-warnings=ExperimentalWarning --import tsx scripts/mcp-config.ts",
+    "smoke": "node --no-warnings=ExperimentalWarning --import tsx scripts/smoke.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "express": "^5.3.0",
+    "imapflow": "^2.10.0",
+    "mailparser": "^3.14.1",
+    "nodemailer": "^10.3.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "^26.6.6",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
